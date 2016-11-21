@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Battman Dashboard</title>
+        <link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css">
+        <link rel="stylesheet" type="text/css" href="rickshaw/rickshaw.min.css">
+        <link rel="stylesheet" type="text/css" href="weather-icons/css/weather-icons.min.css">
+        <link rel="stylesheet" type="text/css" href="battman-font/css/battman.css">
+        <link rel="stylesheet" type="text/css" href="electric-font/css/electric.css">
+        <link rel="stylesheet" type="text/css" href="circuit-font/style.css">
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+        <meta name="theme-color" content="#ffffff">
+        <script src="jquery-1.10.2.min.js"></script>
+        <script src="semantic/dist/semantic.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="rickshaw/vendor/d3.min.js"></script>
+        <script src="rickshaw/vendor/d3.layout.min.js"></script>
+        <script src="rickshaw/rickshaw.min.js"></script>
+        <script src="client.js"></script>
+    </head>
+    <body>
+        <div id="header" class="ui bottom attached inverted segment">
+            <div id="headerwrap" class="ui container">
+                <h1 id="logo" class="ui inverted header"><i class="icon icon-battman" style="margin-top: -3px; margin-right: 4px; font-size: 30pt"></i>battman</h1>
+                <div class="ui divider" style="margin: 0"></div>
+                <div id="menu" class="ui inverted secondary pointing menu" style="border: none; padding-bottom: 2px">
+                    <a class="item active" data-tab="overview"><i class="dashboard icon"></i> Overview</a>
+                    <a class="item" data-tab="battery"><i class="icon-electric-battery icon"></i> Battery Settings</a>
+                    <a class="item" data-tab="accessory"><i class="plug icon"></i> Accessory Settings</a>
+                    <a class="item" data-tab="misc"><i class="options icon"></i> Miscellaneous Settings</a>
+                    <a class="item" data-tab="data"><i class="line chart icon"></i> Real-time Data</a>
+                    <a class="item" data-tab="console"><i class="terminal icon"></i> Console</a>
+                </div>
+            </div>
+        </div>
+        <div id="container" class="ui container">
+            <div class="ui grid">
+                <div class="twelve wide column">
+                    <div class="ui attached green tab segment active" data-tab="overview">
+                    </div>
+                    <div class="ui tab grid" data-tab="battery">
+                        <div class="stretched row">
+                            <div class="two wide column">
+                                <div class="ui secondary vertical labeled icon menu">
+                                    <a class="item active" data-tab="pack" style="padding-left: 2px; padding-right: 2px"><i class="icon-electric-battery icon"></i>Pack Configuration</a>
+                                    <a class="item" data-tab="limits"><i class="protect icon"></i>Limits</a>
+                                    <a class="item" data-tab="charging"><i class="lightning icon"></i>Charging</a>
+                                    <a class="item" data-tab="balancing"><i class="law icon"></i>Balancing</a>
+                                    <a class="item" data-tab="power"><i class="power icon"></i>Power</a>
+                                </div>
+                            </div>
+                            <div class="fourteen wide column">
+                                <div class="ui tab grid active" data-tab="pack">
+                                </div>
+                                <div class="ui tab grid" style="margin-top: 0" data-tab="limits">
+                                </div>
+                                <div class="ui tab grid" style="margin-top: 0" data-tab="charging">
+                                </div>
+                                <div class="ui tab grid" style="margin-top: 0" data-tab="balancing">
+                                </div>
+                                <div class="ui tab grid" style="margin-top: 0" data-tab="power">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui tab grid" data-tab="accessory">
+                        <div class="stretched row">
+                        <div class="eight wide column">
+                        <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                        </div>
+                        </div>
+                        <div class="eight wide column">
+                        <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                        </div>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="ui green tab segment" data-tab="misc" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                    </div>
+                    <div class="ui green tab segment" data-tab="data" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                        <div id="y_axis_left"></div>
+                        <div id="graph"></div>
+                        <div id="y_axis_right"></div>
+                    </div>
+                    <div class="ui green tab segment" data-tab="console" style="margin-top: 0; border-radius: 0; box-shadow: none; margin-bottom: 1rem">
+                        <div id="console" tabindex="0">
+                            <div id="output"></div>
+                            <div id="cmd"><span id="input"><span class="cursor noblink">&nbsp;</span></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="four wide column">
+                    <div class="ui attached olive segment" style="border-top: 2px solid #B5DD58">
+                        <div class="ui grid">
+                            <div class="sixteen wide column">
+                                <div class="ui fluid selection dropdown" id="ports" style="margin-bottom: 0.73em">
+                                    <i class="usb icon"></i>
+                                    <span id="select-port" class="text">Select Port...</span>
+                                    <i class="dropdown icon" style="background-color: white"></i>
+                                    <div class="menu"></div>
+                                </div>
+                                <div class="ui basic buttons">
+                                <div class="ui button" id="connect"><i class="plug icon"></i><span>Connect</span></div><div class="ui icon button" id="listports"><i class="refresh icon"></i></div>
+                                </div>
+                            </div>
+                            <div class="sixteen wide column">
+                                <h4 id="status" class="ui header"><i class="grey circle icon" style="font-size: 2em; width: 30px"></i><div class="content">Not Connected<div class="sub header"></div></div></h4>
+                                <div class="ui relaxed list">
+                                    <div class="item">
+                                        <i class="tag middle aligned icon"></i>
+                                        <div class="content">
+                                            Firmware Version: <span id="version">0.0</span>
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <i class="lightning middle aligned icon"></i>
+                                        <div class="content">
+                                            Battery Voltage: <span id="voltage">0.0</span>V
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <i class="wi wi-thermometer middle aligned icon" style="font-family: weathericons"></i>
+                                        <div class="content">
+                                            Board Temperature: <span id="temperature">0.0</span>&#8451;
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--<input type="range" id="duty" min="0" max="10000" value="0">-->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="footer" class="ui horizontal divider" style="margin-top: 15px"><i class="icon icon-battman" id="footer-logo"></i></div>
+            <div class="ui basic small modal" style="text-align: center">
+                <h1 class="ui header" style="margin: 0 auto; display: inline-block; text-align: left"><i class="warning sign icon" style="font-size: 40pt"></i><div class="content" style="font-size: 16pt">Server Connection Lost<div class="sub header" style="color: white">Please restart the server.</div></div></h1>
+            </div>
+    </body>
+</html>

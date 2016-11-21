@@ -1,0 +1,148 @@
+@font-face
+{
+    font-family: Giorgio;
+    src: url(Giorgio.ttf);
+}
+
+#container
+{
+    padding: 30px;
+    margin: 0 auto;
+    padding-top: 15px;
+    width: 1200px;
+}
+
+#console
+{
+    width: 100%;
+    height: 400px;
+    overflow-y: auto;
+    word-wrap: break-word;
+    font-family: courier;
+    outline: none;
+}
+
+#header
+{
+    background-color: #203025;
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 0px;
+    border-radius: 0;
+}
+
+#headerwrap
+{
+    width: 1200px;
+    margin: 0 auto;
+    padding: 0 30px;
+    padding-top: 20px;
+    padding-bottom: 5px;
+}
+
+#logo
+{
+    font-family: 'Giorgio';
+    font-weight: normal;
+    font-size: 20pt;
+    padding-top: 5px;
+    color: #C8FFB0;
+    -webkit-font-smoothing: antialiased;
+}
+
+#menu>.item.active
+{
+    border-bottom-style: solid;
+    border-bottom-width: 2px;
+    border-bottom-color: #CFFF9A!important;
+}
+
+#status {
+    padding-bottom: 5px;
+}
+
+.ui.tiny.header {
+    color: #889099;
+    font-size: 1em;
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-top: 3px;
+}
+
+#sidebar-motor-icon:before {
+    margin-left: .1em;
+}
+
+.cursor
+{
+    background-color: #bbb;
+    color: #000;
+    -webkit-animation: terminal-blink 1s infinite steps(1, start);
+    -moz-animation: terminal-blink 1s infinite steps(1, start);
+    -ms-animation: terminal-blink 1s infinite steps(1, start);
+    animation: terminal-blink 1s infinite steps(1, start);
+}
+
+.noblink
+{
+    -webkit-animation: none;
+    -moz-animation: none;
+    -ms-animation: none;
+    animation: none;
+}
+
+@keyframes terminal-blink {
+    0%, 100% {
+        background-color: #fff;
+        color: #000;
+    }
+    50% {
+        background-color: #bbb;
+        color: #000;
+    }
+}
+
+#ports {
+    white-space:nowrap;
+}
+
+#graph {
+    position: relative;
+    left: 30px;
+}
+
+#y_axis_left {
+    position: absolute;
+    top: 15px;
+    bottom: 0;
+    width: 30px;
+}
+
+#y_axis_right {
+    position: absolute;
+    top: 15px;
+    bottom: 0;
+    right: 0;
+    width: 45px;
+}
+
+#footer-logo
+{
+    font-size: 18pt;
+    background-color: #565656;
+    color: #ccc;
+    text-shadow: 0px 2px 3px rgba(255,255,255,0.5);
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    background-clip: text;
+}
+
+.ui.selection.active.dropdown, .ui.selection.active.dropdown .menu, .ui.selection.active.dropdown:active, .ui.selection.dropdown:focus
+{
+    border-color: #B5DD58!important;
+}
+
+::selection
+{
+    background-color: #00AA5F;
+}
