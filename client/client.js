@@ -39,13 +39,49 @@ $(function() {
     graph.render();
     socket.on('graph', function(data) {
         graph.series.addData(data);
-        graph.configure({width: $("#graph").parent().width() - 60, height: 400});
+        if ($("#graph").parent().width() > 0)
+            graph.configure({width: $("#graph").parent().width() - 60, height: 400});
         graph.render();
+    });
+
+    var bargraph = new Rickshaw.Graph({
+        element: document.querySelector("#bargraph"),
+	width: $("#bargraph").parent().width() - 60,
+	height: 400,
+        renderer: 'bar',
+        series: [{
+            name: 'cells',
+            data: [],
+            color: 'lightgreen',
+        }],
+        min: 1.5,
+        max: 5
+    });
+    var y_bar = new Rickshaw.Graph.Axis.Y( {
+        graph: bargraph,
+        orientation: 'left',
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        element: document.getElementById('y_axis_bar')
+    } );
+    new Rickshaw.Graph.HoverDetail( {
+        graph: bargraph
+    });
+
+    bargraph.render();
+    socket.on('cells', function(data) {
+        data.forEach(function(element, index) {
+            data[index].y = parseFloat(data[index].y);
+        });
+        bargraph.series[0].data = data;
+        if ($("#bargraph").parent().width() > 0)
+            bargraph.configure({width: $("#bargraph").parent().width() - 60, height: 400});
+        bargraph.update();
         console.log(data);
     });
-    $(".ui.modal").modal({closable: false});
+
+    $("#disconnect").modal({closable: false});
     socket.on('disconnect', function(){
-        $(".ui.modal").modal('show');
+        $("#disconnect").modal('show');
         connected = false;
         $('#status i').attr("class", "grey circle icon");
         $('#status .content').text("Not Connected");
@@ -59,7 +95,7 @@ $(function() {
         $('#ports #select-port').text("Select Port...");
     });
     socket.on('connect', function(){
-        $(".ui.modal").modal('hide');
+        $("#disconnect").modal('hide');
 	socket.emit('list ports');
     });
     socket.emit('list ports');
@@ -374,6 +410,68 @@ $(function() {
                 {on: 'click'}
               )
         ;
+
+    $("#firmware-update").modal({onHidden: closeModal});
+    var closeModal = function() {
+        $("#upload").fadeTo(200, 1);
+        $("#update-progress").fadeTo(200, 0);
+        $("#update-button").removeClass("positive");
+        $("#update-button").removeClass("disabled");
+        $("#update-button").addClass("black");
+        $("#update-button").addClass("deny");
+        $("#update-button").empty().text("Cancel");
+    };
+    $("#firmware-update-button").click(function() {
+        if (connected)
+            $("#firmware-update").modal('show');
+    });
+    $('#update-progress').progress({
+          percent: 0
+    });
+    $('#update-progress').progress('set active');
+    $('#upload').click(function(){
+        $('#upload-input').click();
+    });
+    $('#upload-input').change(function() {
+        $('#upload-form').submit();
+    });
+    $('#upload-form').submit(function() {
+	$(this).ajaxSubmit({
+
+	    error: function(xhr) {
+		console.log('Error: ' + xhr.status);
+	    },
+
+	    success: function(response) {
+		$("#update-status").empty().text("Erasing firmware...");
+                $("#upload").fadeTo(200, 0);
+                $("#update-progress").fadeTo(200, 1);
+                $("#update-progress").progress('set total', response.size);
+                $("#update-progress").progress('set progress', 0);
+                $("#update-button").addClass("disabled");
+                $("#firmware-update").modal({onHidden: closeModal, closable: false});
+	    }
+        });
+        return false;
+    });
+    socket.on('fw erase', function() {
+        $("#update-status").empty().text("Uploading firmware...");
+    });
+    socket.on('fw write', function(progress) {
+        $("#update-progress").progress('set progress', progress);
+    });
+    socket.on('fw complete', function() {
+        $("#update-status").empty().text("Upload complete. Entering bootloader...");
+    });
+    socket.on('fw reset', function() {
+        $("#update-status").empty().text("Firmware update complete.");
+        $("#update-button").removeClass("black");
+        $("#update-button").removeClass("deny");
+        $("#update-button").removeClass("disabled");
+        $("#update-button").addClass("positive");
+        $("#update-button").empty().text("Done");
+        $("#firmware-update").modal({onHidden: closeModal, closable: true});
+    });
     var history = [];
     var inputReset = '<span>battman>&nbsp;</span><span id="input"><span class="cursor">&nbsp;</span></span>';
     var historyIndex = 0;

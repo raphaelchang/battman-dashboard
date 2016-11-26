@@ -16,6 +16,7 @@
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
         <meta name="theme-color" content="#ffffff">
         <script src="jquery-1.10.2.min.js"></script>
+        <script src="jquery.form.min.js"></script>
         <script src="semantic/dist/semantic.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="rickshaw/vendor/d3.min.js"></script>
@@ -33,7 +34,7 @@
                     <a class="item" data-tab="battery"><i class="icon-electric-battery icon"></i> Battery Settings</a>
                     <a class="item" data-tab="accessory"><i class="plug icon"></i> Accessory Settings</a>
                     <a class="item" data-tab="misc"><i class="options icon"></i> Miscellaneous Settings</a>
-                    <a class="item" data-tab="data"><i class="line chart icon"></i> Real-time Data</a>
+                    <a class="item" data-tab="data"><i class="line chart icon"></i> Data Visualization</a>
                     <a class="item" data-tab="console"><i class="terminal icon"></i> Console</a>
                 </div>
             </div>
@@ -80,12 +81,55 @@
                         </div>
                         </div>
                     </div>
-                    <div class="ui green tab segment" data-tab="misc" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                    <div class="ui tab grid" data-tab="misc" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                        <div class="stretched row" style="padding-top: 0">
+                            <div class="eight wide column">
+                                <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                    <div class="ui tiny header"><i class="wait icon"></i>Real-time Clock</div>
+                                </div>
+                            </div>
+                            <div class="eight wide column">
+                                <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                    <div class="ui tiny header"><i class="volume up icon"></i>Buzzer Settings</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="ui green tab segment" data-tab="data" style="margin-top: 0; border-radius: 0; box-shadow: none">
-                        <div id="y_axis_left"></div>
-                        <div id="graph"></div>
-                        <div id="y_axis_right"></div>
+                    <div class="ui tab grid" data-tab="data" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                        <div class="stretched row" style="padding-top: 0">
+                            <div class="two wide column">
+                                <div class="ui secondary vertical labeled icon menu">
+                                    <a class="item active" data-tab="plots"><i class="heartbeat icon"></i>Real-time Data</a>
+                                    <a class="item" data-tab="cells"><i class="bar chart icon"></i>Cell Voltages</a>
+                                    <a class="item" data-tab="logs"><i class="line chart icon"></i>Log Plots</a>
+                                </div>
+                            </div>
+                            <div class="fourteen wide column">
+                                <div class="ui tab grid active" data-tab="plots">
+                                    <div class="stretched row">
+                                        <div class="sixteen wide column">
+                                        <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                            <div id="y_axis_left"></div>
+                                            <div id="graph"></div>
+                                            <div id="y_axis_right"></div>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ui tab grid" style="margin-top: 0" data-tab="cells">
+                                    <div class="stretched row" style="padding-top: 0">
+                                        <div class="sixteen wide column">
+                                        <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                            <div id="y_axis_bar"></div>
+                                            <div id="bargraph"></div>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ui tab grid" style="margin-top: 0" data-tab="logs">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="ui green tab segment" data-tab="console" style="margin-top: 0; border-radius: 0; box-shadow: none; margin-bottom: 1rem">
                         <div id="console" tabindex="0">
@@ -114,7 +158,7 @@
                                     <div class="item">
                                         <i class="tag middle aligned icon"></i>
                                         <div class="content">
-                                            Firmware Version: <span id="version">0.0</span>
+                                            Firmware Version: <span id="version">0.0 (<a id="firmware-update-button">Update</a>)</span>
                                         </div>
                                     </div>
                                     <div class="item">
@@ -137,7 +181,36 @@
                 </div>
             </div>
             <div id="footer" class="ui horizontal divider" style="margin-top: 15px"><i class="icon icon-battman" id="footer-logo"></i></div>
-            <div class="ui basic small modal" style="text-align: center">
+            <div id="firmware-update" class="ui small modal" style="text-align: center">
+                <div class="header">
+                    Firmware Update
+                </div>
+                <div class="content">
+                    <form id="upload-form"
+                        enctype="multipart/form-data"
+                        action="/update"
+                        method="post">
+                        <button id="upload" class="ui positive button" type="button">
+                            <i class="upload icon"></i>
+                            Upload Firmware 
+                        </button>
+                        <input type="file" name="firmware" id="upload-input" accept=".bin" style="visibility: hidden; width: 0" />
+                    </form>
+
+                    <div id="update-progress" class="ui active progress" style="opacity: 0">
+                        <div class="bar">
+                            <div class="progress"></div>
+                        </div>
+                        <div id="update-status" class="label">Uploading firmware...</div>
+                    </div>
+                </div>
+                <div class="actions" style="text-align: right">
+                    <div id="update-button" class="ui black deny button">
+                        Cancel
+                    </div>
+                </div>
+            </div>
+            <div id="disconnect" class="ui basic small modal" style="text-align: center">
                 <h1 class="ui header" style="margin: 0 auto; display: inline-block; text-align: left"><i class="warning sign icon" style="font-size: 40pt"></i><div class="content" style="font-size: 16pt">Server Connection Lost<div class="sub header" style="color: white">Please restart the server.</div></div></h1>
             </div>
     </body>

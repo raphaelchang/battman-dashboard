@@ -106,12 +106,12 @@
     white-space:nowrap;
 }
 
-#graph {
+#graph, #bargraph {
     position: relative;
     left: 30px;
 }
 
-#y_axis_left {
+#y_axis_left, #y_axis_bar {
     position: absolute;
     top: 15px;
     bottom: 0;
