@@ -1,4 +1,4 @@
-# resc-gui
+# Battman Dashboard
 How to run:  
 1. [Install Node.js](https://nodejs.org/en/download/)  
 2. `npm start`  
