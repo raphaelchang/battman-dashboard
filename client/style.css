@@ -146,3 +146,8 @@
 {
     background-color: #00AA5F;
 }
+
+a, a:hover
+{
+    color: #7FCA22;
+}

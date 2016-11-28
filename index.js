@@ -12,6 +12,7 @@ var usb = require('usb');
 var multer= require('multer');
 var storage = multer.memoryStorage();
 var upload = multer({ storage: storage });
+var fb = require('float-bits');
 
 // Add content compression middleware
 app.use(compression());
@@ -19,6 +20,7 @@ app.use(compression());
 // Add static middleware
 app.use(express.static(__dirname + '/client'));
 
+var firmware_update = function(req, res) { console.log("Firmware update function not defined") };
 io.on('connection', function(socket) {
     console.log('a user connected');
 
@@ -46,20 +48,72 @@ io.on('connection', function(socket) {
             socket.emit('list ports', {list: port_list});
         });
     });
+    app.post('/update', upload.single('firmware'), function(req, res) {firmware_update(req, res)});
+    var port;
     socket.on('connect port', function(portName) {
         if (portName == "")
             return;
-        var port = new SerialPort(portName, {
+        port = new SerialPort(portName, {
             parser: serialport.parsers.byteDelimiter(0x0A),
             baudRate: 115200,
             lock: false
         });
         port.on('open', function (err) {
+            var Cmd = {
+                START: 0x50,
+                START_LONG: 0x51,
+                END: 0x0A,
+                PACKET_CONNECT: 0x00,
+                PACKET_CONSOLE: 0x01,
+                PACKET_GET_DATA: 0x02,
+                PACKET_GET_CELLS: 0x03,
+                PACKET_ERASE_NEW_FW: 0x04,
+                PACKET_WRITE_NEW_FW: 0x05,
+                PACKET_JUMP_BOOTLOADER: 0x06,
+                PACKET_CONFIG_SET_FIELD: 0x07,
+                PACKET_CONFIG_GET_FIELD: 0x08,
+                PACKET_CONFIG_SET_ALL: 0x09,
+                PACKET_CONFIG_GET_ALL: 0x0A
+            };
+            var configTable = [
+                ["CANDeviceID", "uint8", 1],
+                ["numCells", "uint8", 1],
+                ["lowVoltageCutoff", "float", 4],
+                ["highVoltageCutoff", "float", 4],
+                ["maxCurrentCutoff", "float", 4],
+                ["chargeVoltage", "float", 4],
+                ["chargeCurrent", "float", 4],
+                ["turnOnDelay", "uint16", 2],
+                ["shutdownDelay", "uint16", 2],
+                ["chargeMode", "uint8", 1],
+                ["chargeCurrentGain_P", "float", 4],
+                ["chargeCurrentGain_I", "float", 4],
+                ["prechargeTimeout", "uint16", 2],
+                ["balanceStartVoltage", "float", 4],
+                ["balanceDifferenceThreshold", "float", 4],
+                ["chargerDisconnectShutdown", "bool", 1]
+            ];
+            var Config = {
+                FieldToID: {},
+                IDToField: {},
+                FieldToType: {}
+            };
+            var configSize = 0;
+            for (j = 0; j < configTable.length; j++)
+            {
+                Config.FieldToID[configTable[j][0]] = configSize;
+                Config.IDToField[configSize] = configTable[j][0];
+                Config.FieldToType[configTable[j][0]] = configTable[j][1];
+                configSize += configTable[j][2];
+            }
+
+            var connected = true;
             if (err)
             {
                 return console.log('Error opening port: ', err.message);
             }
             port.on('disconnect', function(err) {
+                connected = false;
                 socket.emit('disconnect port');
             });
             function hex(num) {
@@ -69,32 +123,6 @@ io.on('connection', function(socket) {
                 return array
                     .map(hex)
                     .join('');
-            }
-            function f32bit_double(x) {
-                // handle sign bit
-                if (x < 0) {
-                    x += 2147483648;
-                    s = -1;
-                } else {
-                    s = 1;
-                }
-
-                r = x % 8388608; // raw significand
-                e = (x-r) >> 23; // raw exponent
-
-                if (e === 0) {
-                    // subnormal
-                    e -= 126;
-                    r = r/8388608;
-                } else if (e == 255) {
-                    // inf or nan
-                    return r === 0 ? s*Infinity : NaN;
-                } else {
-                    // normalised
-                    e -= 127;
-                    r = 1+r/8388608;
-                }
-                return s*r*Math.pow(2,e);
             }
             function uint16 (n) {
                 return n & 0xFFFF;
@@ -130,17 +158,20 @@ io.on('connection', function(socket) {
                     0x0cc1, 0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8,
                     0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0 ]);
                 var cksum = 0;
-                for (i = 0; i < buffer.length; i++) {
-                    cksum = uint16(uint16(crc16_tab[((uint16((cksum >> 8)) ^ buffer[i]) & 0xFF)]) ^ (uint16((cksum << 8))));
+                for (inx = 0; inx < buffer.length; inx++) {
+                    cksum = uint16(uint16(crc16_tab[((uint16((cksum >> 8)) ^ buffer[inx]) & 0xFF)]) ^ (uint16((cksum << 8))));
                 }
                 return cksum;
             }
-            function bufferToPacket(cmd, buffer)
+            function bufferToPacket(cmd, buffer, longPacket = false)
             {
                 var length = buffer.length + 1;
-                var start = new Buffer(2);
-                start[0] = Cmd.START;
-                start[1] = length;
+                var start = new Buffer(longPacket ? 3 : 2);
+                start[0] = longPacket ? Cmd.START_LONG : Cmd.START;
+                if (longPacket)
+                    start.writeUInt16BE(length, 1);
+                else
+                    start[1] = length;
                 var data = new Buffer(1);
                 data[0] = cmd;
                 data = Buffer.concat([data, buffer], length);
@@ -148,31 +179,94 @@ io.on('connection', function(socket) {
                 crc.writeUInt16BE(crc16(data));
                 var end = new Buffer(1);
                 end[0] = Cmd.END;
-                return Buffer.concat([start, data, crc, end], length + 5);
+                return Buffer.concat([start, data, crc, end], length + (longPacket ? 6 : 5));
             }
-            var Cmd = {
-                START: 0x50,
-                END: 0x0A,
-                PACKET_CONNECT: 0x00,
-                PACKET_CONSOLE: 0x01,
-                PACKET_GET_DATA: 0x02,
-                PACKET_GET_CELLS: 0x03,
-                PACKET_ERASE_NEW_FW: 0x04,
-                PACKET_WRITE_NEW_FW: 0x05,
-                PACKET_JUMP_BOOTLOADER: 0x06
-            };
+            var processState = 0;
+            var packetData = [];
+            var packetTimeout = 1000;
+            var packetTimer = setTimeout(resetProcessState, packetTimeout);
+            var packetLength;
+            var packetCrc;
+            function processPacketData(data)
+            {
+                for (i = 0; i < data.length; i++)
+                {
+                    switch (processState)
+                    {
+                        case 0:
+                            if (data[i] == Cmd.START || data[i] == Cmd.START_LONG)
+                            {
+                                clearTimeout(packetTimer);
+                                packetTimer = setTimeout(resetProcessState, packetTimeout);
+                                if (data[i] == Cmd.START)
+                                    processState = 2;
+                                else
+                                    processState = 1;
+                                packetLength = 0;
+                                packetData = [];
+                            }
+                            break;
+                        case 1:
+                            clearTimeout(packetTimer);
+                            packetTimer = setTimeout(resetProcessState, packetTimeout);
+                            packetLength = data[i] << 8;
+                            processState++;
+                            break;
+                        case 2:
+                            clearTimeout(packetTimer);
+                            packetTimer = setTimeout(resetProcessState, packetTimeout);
+                            packetLength |= data[i];
+                            processState++;
+                            break;
+                        case 3:
+                            clearTimeout(packetTimer);
+                            packetTimer = setTimeout(resetProcessState, packetTimeout);
+                            packetData.push(data[i]);
+                            if (packetData.length >= packetLength)
+                            {
+                                processState++;
+                            }
+                            break;
+                        case 4:
+                            clearTimeout(packetTimer);
+                            packetTimer = setTimeout(resetProcessState, packetTimeout);
+                            packetCrc = data[i] << 8;
+                            processState++;
+                            break;
+                        case 5:
+                            clearTimeout(packetTimer);
+                            packetTimer = setTimeout(resetProcessState, packetTimeout);
+                            packetCrc |= data[i];
+                            processState++;
+                            break;
+                        case 6:
+                            clearTimeout(packetTimer);
+                            packetTimer = setTimeout(resetProcessState, packetTimeout);
+                            if (data[i] == Cmd.END)
+                            {
+                                processState = 0;
+                                var ret =  packetData.slice();
+                                packetData = [];
+                                if (crc16(ret) == packetCrc)
+                                {
+                                    return ret;
+                                }
+                            }
+                            break;
+                    }
+                }
+                return [];
+            }
+            function resetProcessState()
+            {
+                processState = 0;
+                packetTimer = setTimeout(resetProcessState, packetTimeout);
+            }
             var updatingFirmware = false;
 
             console.log('Connected to', portName);
-            var handshake = bufferToPacket(Cmd.PACKET_CONNECT, Buffer.alloc(0));
-            port.write(handshake, function(err, bytesWritten) {
-                if (err) {
-                    return console.log('Error: ', err.message);
-                }
-            });
-            socket.emit('connect port');
             socket.on('serial send', function(data) {
-                if (updatingFirmware)
+                if (updatingFirmware || !connected)
                     return;
                 console.log(data);
                 var buffer = new Buffer(data, "ascii");
@@ -185,8 +279,8 @@ io.on('connection', function(socket) {
                     }
                 });
             });
-            app.post('/update', upload.single('firmware'), function(req, res) {
-                console.log('Should be the buffer:', req.file.buffer)
+            var chunkSize = 256;
+            firmware_update = function(req, res) {
                 updatingFirmware = true;
                 var sizebuf = new Buffer(4);
                 sizebuf.writeUInt32BE(req.file.buffer.length);
@@ -223,6 +317,7 @@ io.on('connection', function(socket) {
                         }
                         port.close(function(err)
                                 {
+                                    connected = false;
                                     socket.emit('disconnect port');
                                     var timer = setTimeout(checkForReset, 500, "reset check");
                                 });
@@ -234,31 +329,34 @@ io.on('connection', function(socket) {
                     var timer = setTimeout(function() {writeWrite(start, end, total, timer, retryCount + 1)}, 2000, "timeout");
                     var offset = new Buffer(4);
                     offset.writeUInt32BE(start);
-                    var send = bufferToPacket(Cmd.PACKET_WRITE_NEW_FW, Buffer.concat([offset, firmware.slice(start, end)], end - start + 4));
+                    var send = bufferToPacket(Cmd.PACKET_WRITE_NEW_FW, Buffer.concat([offset, firmware.slice(start, end)], end - start + 4), true);
+                    console.log("sending");
                     port.write(send, function(err, bytesWritten) {
                         var complete = false;
                         port.on('data', function(data)
                                 {
-                                    if (!complete)
+                                    data = processPacketData(data);
+                                    if (!complete && data.length > 0)
                                     {
-                                        if (data[0] == Cmd.START && data[1] == Cmd.PACKET_WRITE_NEW_FW)
+                                        if (data[0] == Cmd.PACKET_WRITE_NEW_FW)
                                         {
-                                            var success = data[2];
+                                            var success = data[1];
                                             if (success == 0)
                                                 return;
+                                            console.log("sent");
                                             complete = true;
                                             socket.emit('fw write', total + end - start);
                                             clearTimeout(timer);
                                             if (end == firmware.length)
                                                 completed();
                                             else
-                                                writeWrite(end, end + 128 > firmware.length ? firmware.length : end + 128, total + end - start, 0);
+                                                writeWrite(end, end + chunkSize > firmware.length ? firmware.length : end + chunkSize, total + end - start, 0);
                                         }
                                     }
                                 });
                     });
                 };
-                var writeErase = function() {
+             var writeErase = function() {
                     var timer = setTimeout(function() {writeErase()}, 2000, "timeout");
                     port.write(erase, function(err, bytesWritten) {
                         if (err) {
@@ -266,19 +364,51 @@ io.on('connection', function(socket) {
                         }
                         port.on('data', function(data)
                                 {
-                                    if (data[0] == Cmd.START && data[1] == Cmd.PACKET_ERASE_NEW_FW)
+                                    data = processPacketData(data);
+                                    if (data.length > 0 && data[0] == Cmd.PACKET_ERASE_NEW_FW)
                                     {
                                         socket.emit('fw erase');
                                         clearTimeout(timer);
-                                        writeWrite(0, 128, 0, 0);
+                                        writeWrite(0, chunkSize, 0, 0);
                                     }
                                 });
                     });
                 };
                 writeErase();
+            };
+            socket.on('config change', function(data) {
+                var idbuf = new Buffer(2);
+                idbuf.writeUInt16BE(Config.FieldToID[data.field]);
+                var databuf;
+                switch(Config.FieldToType[data.field])
+                {
+                    case "uint8":
+                        databuf = new Buffer(1);
+                        databuf[0] = data.value;
+                        break;
+                    case "uint16":
+                        databuf = new Buffer(2);
+                        databuf.writeUInt16BE(data.value);
+                        break;
+                    case "uint32":
+                        databuf = new Buffer(4);
+                        databuf.writeUInt32BE(data.value);
+                        break;
+                    case "float":
+                        databuf = new Buffer(4);
+                        databuf.writeUInt32BE(fb.toUint(data.value));
+                        break;
+                }
+                var send = bufferToPacket(Cmd.PACKET_CONFIG_SET_FIELD, Buffer.concat([idbuf, databuf]));
+                console.log(send);
+                port.write(send, function(err, bytesWritten) {
+                    if (err) {
+                        return console.log('Error: ', err.message);
+                    }
+                });
             });
             var requestData = function() {
-                if (updatingFirmware)
+                if (updatingFirmware || !connected)
                     return;
                 var req = bufferToPacket(Cmd.PACKET_GET_DATA, Buffer.alloc(0));
                 port.write(req, function(err, bytesWritten) {
@@ -294,25 +424,57 @@ io.on('connection', function(socket) {
                 });
             }
             var run = setInterval(requestData, 100);
-            port.on('data', function(data)
+            port.on('data', function(packet)
                     {
-                        if (updatingFirmware)
+                        if (updatingFirmware || !connected)
                             return;
-                        //console.log(data);
-                        if (data[0] == Cmd.START && data[1] == Cmd.PACKET_CONSOLE)
+                        var data = processPacketData(packet);
+                        if (data == [])
+                            return;
+                        if (data[0] == Cmd.PACKET_CONSOLE)
                         {
-                            socket.emit('serial receive', hexString(data.slice(2, -1)));
+                            socket.emit('serial receive', hexString(data.slice(1)));
                         }
-                        else if (data[0] == Cmd.START && data[1] == Cmd.PACKET_GET_DATA)
+                        else if (data[0] == Cmd.PACKET_CONNECT)
                         {
-                            if (data.slice(2, -1).length % 4 != 0)
-                                return;
-                            var uint8 = new Uint8Array(data.slice(2, -1));
-                            var values = new Int32Array(uint8.buffer);
-                            var voltage = f32bit_double(values[0]).toFixed(2);
-                            var temp = f32bit_double(values[1]).toFixed(2);
-                            var current = f32bit_double(values[2]).toFixed(2);
-                            var chargeVoltage = f32bit_double(values[3]).toFixed(2);
+                            socket.emit('fw version', hexString(data.slice(1)));
+                        }
+                        else if (data[0] == Cmd.PACKET_CONFIG_SET_FIELD)
+                        {
+                            var uint8 = new Uint8Array(data.slice(1));
+                            var id = new DataView(uint8.buffer.slice(0, 2)).getUint16(0, false);
+                            var type = Config.FieldToType[Config.IDToField[id]];
+                            var value;
+                            switch(type)
+                            {
+                                case "uint8":
+                                    value = uint8[2];
+                                    break;
+                                case "uint16":
+                                    var array = new DataView(uint8.buffer.slice(2)).getUint16(0, false);
+                                    value = array[0];
+                                    break;
+                                case "uint32":
+                                    var array = new DataView(uint8.buffer.slice(2)).getUint32(0, false);
+                                    value = array[0];
+                                    break;
+                                case "float":
+                                    var array = new DataView(uint8.buffer.slice(2)).getUint32(0, false);
+                                    value = fb.fromUint(array).toFixed(2);
+                                    break;
+                            }
+                            socket.emit('config change', {field: Config.IDToField[id], value: value});
+                        }
+                        else if (data[0] == Cmd.PACKET_GET_DATA)
+                        {
+                            //if (data.slice(1).length % 4 != 0)
+                                //return;
+                            var uint8 = new Uint8Array(data.slice(1));
+                            var values = new DataView(uint8.buffer);
+                            var voltage = fb.fromInt(values.getInt32(0, false)).toFixed(2);
+                            var temp = fb.fromInt(values.getInt32(4, false)).toFixed(2);
+                            var current = fb.fromInt(values.getInt32(8, false)).toFixed(2);
+                            var chargeVoltage = fb.fromInt(values.getInt32(12, false)).toFixed(2);
                             //var state = uint8[5];
                             //var fault = uint8[7];
                             data = {current: current, charge_voltage: chargeVoltage};
@@ -321,32 +483,79 @@ io.on('connection', function(socket) {
                             socket.emit('temperature', temp);
                             //socket.emit('status_update', {state: state, fault: fault});
                         }
-                        else if (data[0] == Cmd.START && data[1] == Cmd.PACKET_GET_CELLS)
+                        else if (data[0] == Cmd.PACKET_GET_CELLS)
                         {
-                            if (data.slice(2, -1).length % 4 != 0)
-                                return;
-                            var numCells = data.slice(2, -1).length / 4;
-                            var uint8 = new Uint8Array(data.slice(2, -1));
-                            var values = new Int32Array(uint8.buffer);
+                            //if (data.slice(2, -1).length % 4 != 0)
+                                //return;
+                            var numCells = data.slice(1).length / 4;
+                            var uint8 = new Uint8Array(data.slice(1));
+                            var values = new DataView(uint8.buffer);
                             data = [];
-                            for (i = 0; i < numCells; i++)
+                            for (c = 0; c < numCells; c++)
                             {
-                                data.push({x: i, y: f32bit_double(values[i]).toFixed(4)});
+                                data.push({x: c, y: fb.fromInt(values.getInt32(0, false)).toFixed(4)});
                             }
                             if (data.length > 0)
                                 socket.emit('cells', data);
                         }
+                        else if (data[0] == Cmd.PACKET_CONFIG_GET_ALL)
+                        {
+                            // In little endian, assumes configTable matches config struct in firmware
+                            var configStruct = new Uint8Array(data.slice(1));
+                            if (configStruct.length != configSize)
+                                return;
+                            var currIndex = 0;
+                            for (j = 0; j < configTable.length; j++)
+                            {
+                                var value;
+                                switch (configTable[j][1])
+                                {
+                                    case "uint8":
+                                        value = configStruct[currIndex];
+                                        break;
+                                    case "uint16":
+                                        value = new DataView(configStruct.buffer).getUint16(currIndex, true);
+                                        break;
+                                    case "uint32":
+                                        value = new DataView(configStruct.buffer).getUint32(currIndex, true);
+                                        break;
+                                    case "float":
+                                        value = fb.fromUint(new DataView(configStruct.buffer).getUint32(currIndex, true)).toFixed(2);
+                                        break;
+                                    case "bool":
+                                        value = configStruct[currIndex] == 1 ? true : false;
+                                        break;
+                                }
+                                socket.emit('config change', {field: configTable[j][0], value: value});
+                                currIndex += configTable[j][2];
+                            }
+                        }
                     });
+            var handshake = bufferToPacket(Cmd.PACKET_CONNECT, Buffer.alloc(0));
+            port.write(handshake, function(err, bytesWritten) {
+                if (err) {
+                    return console.log('Error: ', err.message);
+                }
+                var config_req = bufferToPacket(Cmd.PACKET_CONFIG_GET_ALL, Buffer.alloc(0));
+                port.write(config_req, function(err, bytesWritten) {
+                    if (err) {
+                        return console.log('Error: ', err.message);
+                    }
+                });
+            });
+            socket.emit('connect port');
             socket.on('disconnect', function()
                     {
                         port.close(function(err)
                                 {
+                                    connected = false;
                                 });
                     });
             socket.on('disconnect port', function()
                     {
                         port.close(function(err)
                                 {
+                                    connected = false;
                                     socket.emit('disconnect port');
                                 });
                     });

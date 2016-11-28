@@ -57,6 +57,35 @@
                             </div>
                             <div class="fourteen wide column">
                                 <div class="ui tab grid active" data-tab="pack">
+                                    <div class="stretched row">
+                                        <div class="sixteen wide column">
+                                            <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                                <div class="ui form">
+                                                    <div class="field">
+                                                        <label>
+                                                            Number of Cells
+                                                            <i class="help circle icon link" data-content="The number of cells in series in the battery pack." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui input">
+                                                            <input name="numCells" class="config-field" type="number">
+                                                        </div>
+                                                    </div>
+                                                    <div class="field">
+                                                        <label>
+                                                            Cell Full Voltage
+                                                            <i class="help circle icon link" data-content="Voltage of a cell when fully charged, for example 4.2V for LiPo batteries." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="highVoltageCutoff" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+					</div>
+                                    </div>
                                 </div>
                                 <div class="ui tab grid" style="margin-top: 0" data-tab="limits">
                                 </div>
@@ -158,7 +187,7 @@
                                     <div class="item">
                                         <i class="tag middle aligned icon"></i>
                                         <div class="content">
-                                            Firmware Version: <span id="version">0.0 (<a id="firmware-update-button">Update</a>)</span>
+                                            Firmware Version: <span id="version">0.0</span> (<a id="firmware-update-button">Update</a>)
                                         </div>
                                     </div>
                                     <div class="item">
@@ -181,23 +210,28 @@
                 </div>
             </div>
             <div id="footer" class="ui horizontal divider" style="margin-top: 15px"><i class="icon icon-battman" id="footer-logo"></i></div>
-            <div id="firmware-update" class="ui small modal" style="text-align: center">
-                <div class="header">
-                    Firmware Update
+            <div id="firmware-update" class="ui small modal" style="text-align: center; width: 600px; margin: 0 0 0 -300px">
+                <div class="ui header">
+                    <i class="refresh icon"></i>
+                    <div class="content">Firmware Update</div>
                 </div>
                 <div class="content">
                     <form id="upload-form"
                         enctype="multipart/form-data"
                         action="/update"
-                        method="post">
+                        method="post" style="position: absolute; left: 0; right: 0">
                         <button id="upload" class="ui positive button" type="button">
                             <i class="upload icon"></i>
                             Upload Firmware 
                         </button>
+                        <button id="check-online" class="ui blue button" type="button">
+                            <i class="world icon"></i>
+                            Check for Updates
+                        </button>
                         <input type="file" name="firmware" id="upload-input" accept=".bin" style="visibility: hidden; width: 0" />
                     </form>
 
-                    <div id="update-progress" class="ui active progress" style="opacity: 0">
+                    <div id="update-progress" class="ui active progress" style="opacity: 0; position: relative; z-index: -100">
                         <div class="bar">
                             <div class="progress"></div>
                         </div>

@@ -4,13 +4,27 @@ $(function() {
     var selectedDeviceName = "";
     var socket = io();
 
+    $(".config-field").on('change', function() {
+        if (!connected)
+        {
+            $(this).val('');
+            return;
+        }
+        $(this).prop("disabled", true);
+        socket.emit('config change', {field: $(this).attr("name"), value: $(this).val()});
+    });
+    socket.on('config change', function(data) {
+        $("input[name=" + data.field + "]").prop("disabled", false);
+        $("input[name=" + data.field + "]").val(data.value);
+    });
+
     var scale1 = d3.scale.linear().domain([-2, 2]).nice();
     var scale2 = d3.scale.linear().domain([-5000, 5000]).nice();
     var series = new Rickshaw.Series.FixedDuration([{ name: 'current', color: 'blue', scale: scale1}, {name: 'charge_voltage', color: 'green', scale: scale1}], undefined, {
 	timeInterval: 100,
 	timeBase: new Date().getTime() / 1000,
 	maxDataPoints: 250
-    }); 
+    });
     var graph = new Rickshaw.Graph({
 	element: $("#graph")[0],
 	width: $("#graph").parent().width() - 60,
@@ -70,13 +84,15 @@ $(function() {
     bargraph.render();
     socket.on('cells', function(data) {
         data.forEach(function(element, index) {
-            data[index].y = parseFloat(data[index].y);
+            var y = parseFloat(data[index].y);
+            if (y > 5.0)
+                y = 0;
+            data[index].y = y;
         });
         bargraph.series[0].data = data;
         if ($("#bargraph").parent().width() > 0)
             bargraph.configure({width: $("#bargraph").parent().width() - 60, height: 400});
         bargraph.update();
-        console.log(data);
     });
 
     $("#disconnect").modal({closable: false});
@@ -88,11 +104,15 @@ $(function() {
         $('#connect span').text("Connect");
         $('#output').html('');
         $("#cmd").html('<span id="input"><span class="cursor noblink">&nbsp;</span></span>');
+        $("#version").html("0.0");
         $("#voltage").html("0.0");
         $("#temperature").html("0.0");
         $('#ports').dropdown('set value', '');
         $('#ports').dropdown('set selected', '');
         $('#ports #select-port').text("Select Port...");
+        $(".config-field").each(function(index) {
+            $(this).val('');
+        });
     });
     socket.on('connect', function(){
         $("#disconnect").modal('hide');
@@ -131,26 +151,6 @@ $(function() {
             $('#ports #select-port').text("Select Port...");
         }
     });
-    socket.on('serial receive', function(data) {
-        console.log(data);
-        if (waiting)
-        {
-            if (data == '\r')
-            {
-                $("#cmd").html(inputReset);
-                $("#console").scrollTop(999999999);
-                cursor = $(".cursor");
-                historyIndex = 0;
-                waiting = false;
-            }
-            else
-            {
-                $("#output").append(data);
-                $("#output").append("<br />");
-                $("#console").scrollTop(999999999);
-            }
-        }
-    });
     socket.on('connect port', function() {
         connected = true;
         $("#cmd").html(inputReset);
@@ -170,11 +170,17 @@ $(function() {
         $('#connect span').text("Connect");
         $('#output').html('');
         $("#cmd").html('<span id="input"><span class="cursor noblink">&nbsp;</span></span>');
+        $("#version").html("0.0");
         $("#voltage").html("0.0");
         $("#temperature").html("0.0");
+        $(".config-field").each(function(index) {
+            $(this).val('');
+        });
         socket.emit('list ports');
     });
-
+    socket.on('fw version', function(data) {
+        $("#version").html(data);
+    });
     socket.on('voltage', function(data) {
         $("#voltage").html(data);
     });
@@ -411,15 +417,20 @@ $(function() {
               )
         ;
 
-    $("#firmware-update").modal({onHidden: closeModal});
+    $("#firmware-update").modal({onHidden: closeModal, keyboardShortcuts: false, autofocus: false});
     var closeModal = function() {
-        $("#upload").fadeTo(200, 1);
+        $("#update-progress").progress('update progress', 0);
+        $("#update-progress").progress('remove success');
+        $("#update-progress").css('z-index', -100);
+        $("#upload-form").fadeTo(200, 1);
         $("#update-progress").fadeTo(200, 0);
         $("#update-button").removeClass("positive");
         $("#update-button").removeClass("disabled");
         $("#update-button").addClass("black");
         $("#update-button").addClass("deny");
         $("#update-button").empty().text("Cancel");
+        $("#upload").removeClass("disabled");
+        $("#check-online").removeClass("disabled");
     };
     $("#firmware-update-button").click(function() {
         if (connected)
@@ -434,22 +445,26 @@ $(function() {
     });
     $('#upload-input').change(function() {
         $('#upload-form').submit();
+        $('#upload-input').val('');
     });
     $('#upload-form').submit(function() {
 	$(this).ajaxSubmit({
-
 	    error: function(xhr) {
 		console.log('Error: ' + xhr.status);
 	    },
 
 	    success: function(response) {
 		$("#update-status").empty().text("Erasing firmware...");
-                $("#upload").fadeTo(200, 0);
+                $("#update-progress").css('z-index', 100);
+                $("#upload-form").fadeTo(200, 0);
                 $("#update-progress").fadeTo(200, 1);
                 $("#update-progress").progress('set total', response.size);
-                $("#update-progress").progress('set progress', 0);
+                $("#update-progress").progress('update progress', 0);
+                $("#update-progress").progress('remove success');
                 $("#update-button").addClass("disabled");
-                $("#firmware-update").modal({onHidden: closeModal, closable: false});
+                $("#upload").addClass("disabled");
+                $("#check-online").addClass("disabled");
+                $("#firmware-update").modal({onHidden: closeModal, closable: false, keyboardShortcuts: false, autofocus: false});
 	    }
         });
         return false;
@@ -470,7 +485,28 @@ $(function() {
         $("#update-button").removeClass("disabled");
         $("#update-button").addClass("positive");
         $("#update-button").empty().text("Done");
-        $("#firmware-update").modal({onHidden: closeModal, closable: true});
+        $("#firmware-update").modal({onHidden: closeModal, closable: true, keyboardShortcuts: false, autofocus: false});
+    });
+
+    socket.on('serial receive', function(data) {
+        console.log(data);
+        if (waiting)
+        {
+            if (data == '\r\n')
+            {
+                $("#cmd").html(inputReset);
+                $("#console").scrollTop(999999999);
+                cursor = $(".cursor");
+                historyIndex = 0;
+                waiting = false;
+            }
+            else
+            {
+                $("#output").append(data);
+                $("#output").append("<br />");
+                $("#console").scrollTop(999999999);
+            }
+        }
     });
     var history = [];
     var inputReset = '<span>battman>&nbsp;</span><span id="input"><span class="cursor">&nbsp;</span></span>';
