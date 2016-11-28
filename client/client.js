@@ -7,16 +7,41 @@ $(function() {
     $(".config-field").on('change', function() {
         if (!connected)
         {
-            $(this).val('');
+            if ($(this).attr("type") == "radio")
+            {
+                $(this).prop("checked", false);
+            }
+            else
+            {
+                $(this).val('');
+            }
             return;
         }
-        $(this).prop("disabled", true);
-        socket.emit('config change', {field: $(this).attr("name"), value: $(this).val()});
+        if ($(this).attr("type") == "radio")
+        {
+            $("input[name=" + $(this).attr("name")).prop("disabled", true);
+            socket.emit('config change', {field: $(this).attr("name"), value: $("input[name=" + $(this).attr("name") + "]:checked").val()});
+        }
+        else
+        {
+            $(this).prop("disabled", true);
+            socket.emit('config change', {field: $(this).attr("name"), value: $(this).val()});
+        }
     });
     socket.on('config change', function(data) {
         $("input[name=" + data.field + "]").prop("disabled", false);
-        $("input[name=" + data.field + "]").val(data.value);
+        if ($("input[name=" + data.field + "]").attr("type") == "radio")
+        {
+            $("input[name=" + data.field + "][value='" + data.value + "']").prop("checked", true);
+        }
+        else
+        {
+            $("input[name=" + data.field + "]").val(data.value);
+        }
     });
+    $('.ui.radio.checkbox')
+        .checkbox()
+        ;
 
     var scale1 = d3.scale.linear().domain([-2, 2]).nice();
     var scale2 = d3.scale.linear().domain([-5000, 5000]).nice();
@@ -111,7 +136,14 @@ $(function() {
         $('#ports').dropdown('set selected', '');
         $('#ports #select-port').text("Select Port...");
         $(".config-field").each(function(index) {
-            $(this).val('');
+            if ($(this).attr("type") == "radio")
+            {
+                $(this).prop("checked", false);
+            }
+            else
+            {
+                $(this).val('');
+            }
         });
     });
     socket.on('connect', function(){
@@ -174,7 +206,14 @@ $(function() {
         $("#voltage").html("0.0");
         $("#temperature").html("0.0");
         $(".config-field").each(function(index) {
-            $(this).val('');
+            if ($(this).attr("type") == "radio")
+            {
+                $(this).prop("checked", false);
+            }
+            else
+            {
+                $(this).val('');
+            }
         });
         socket.emit('list ports');
     });
