@@ -48,18 +48,19 @@
                         <div class="stretched row">
                             <div class="two wide column">
                                 <div class="ui secondary vertical labeled icon menu">
-                                    <a class="item active" data-tab="pack" style="padding-left: 2px; padding-right: 2px"><i class="icon-electric-battery icon"></i>Pack Configuration</a>
-                                    <a class="item" data-tab="limits"><i class="protect icon"></i>Limits</a>
+                                    <a class="item active" data-tab="pack" style="padding-left: 2px; padding-right: 2px"><i class="icon-electric-battery icon"></i>Battery Pack</a>
+                                    <!--<a class="item" data-tab="limits"><i class="protect icon"></i>Limits</a>-->
                                     <a class="item" data-tab="charging"><i class="lightning icon"></i>Charging</a>
-                                    <a class="item" data-tab="balancing"><i class="law icon"></i>Balancing</a>
+                                    <!--<a class="item" data-tab="balancing"><i class="law icon"></i>Balancing</a>-->
                                     <a class="item" data-tab="power"><i class="power icon"></i>Power</a>
                                 </div>
                             </div>
                             <div class="fourteen wide column">
                                 <div class="ui tab grid active" data-tab="pack">
                                     <div class="stretched row">
-                                        <div class="sixteen wide column">
+                                        <div class="eight wide column">
                                             <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                                <div class="ui tiny header"><i class="setting icon"></i>Pack Configuration</div>
                                                 <div class="ui form">
                                                     <div class="field">
                                                         <label>
@@ -72,8 +73,51 @@
                                                     </div>
                                                     <div class="field">
                                                         <label>
+                                                            Pack Capacity
+                                                            <i class="help circle icon link" data-content="The nominal total capacity of the battery pack, in mAh." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="packCapacity" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                mAh
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="field">
+                                                        <label>
                                                             Cell Full Voltage
                                                             <i class="help circle icon link" data-content="Voltage of a cell when fully charged, for example 4.2V for LiPo batteries." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="fullCellVoltage" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="field">
+                                                        <label>
+                                                            Cell Empty Voltage
+                                                            <i class="help circle icon link" data-content="Voltage of a cell when fully discharged. This is not necessarily the low voltage cutoff." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="emptyCellVoltage" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="eight wide column">
+                                            <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                                <div class="ui tiny header"><i class="battery medium icon"></i>Voltage Limits</div>
+                                                <div class="ui form">
+                                                    <div class="field">
+                                                        <label>
+                                                            Cell High Voltage Cutoff
+                                                            <i class="help circle icon link" data-content="The highest cell voltage before the output is disabled." data-offset="-12"></i>
                                                         </label>
                                                         <div class="ui right labeled input">
                                                             <input name="highVoltageCutoff" class="config-field" type="number">
@@ -82,17 +126,184 @@
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <div class="field">
+                                                        <label>
+                                                            Cell High Voltage Warning
+                                                            <i class="help circle icon link" data-content="The cell voltage at which a cell overvoltage warning will be displayed." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="highVoltageWarning" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="field">
+                                                        <label>
+                                                            Cell Low Voltage Warning
+                                                            <i class="help circle icon link" data-content="The cell voltage at which a cell undervoltage warning will be displayed." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="lowVoltageWarning" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="field">
+                                                        <label>
+                                                            Cell Low Voltage Cutoff
+                                                            <i class="help circle icon link" data-content="The lowest cell voltage at which the output is disabled." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="lowVoltageCutoff" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="eight wide column">
+                                        <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                            <div class="ui tiny header"><i class="protect icon"></i>Current Limits</div>
+                                            <div class="ui form">
+                                                <div class="field">
+                                                    <label>
+                                                        Maximum Discharge Current Cutoff
+                                                        <i class="help circle icon link" data-content="The maximum discharge current that can be delivered to the load before the output is disabled." data-offset="-12"></i>
+                                                    </label>
+                                                    <div class="ui right labeled input">
+                                                        <input name="maxCurrentCutoff" class="config-field" type="number">
+                                                        <div class="ui basic label">
+                                                            A
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="field">
+                                                    <label>
+                                                        Maximum Continuous Discharge Current
+                                                        <i class="help circle icon link" data-content="The maximum current allowed to be delivered to the load for an indefinite amount of time." data-offset="-12"></i>
+                                                    </label>
+                                                    <div class="ui right labeled input">
+                                                        <input name="maxContinuousCurrent" class="config-field" type="number">
+                                                        <div class="ui basic label">
+                                                            A
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="field">
+                                                    <label>
+                                                        Continuous Current Exceeding Cutoff Time
+                                                        <i class="help circle icon link" data-content="The amount of time that the current is allowed to exceed the maximum continuous current before the output is disabled." data-offset="-12"></i>
+                                                    </label>
+                                                    <div class="ui right labeled input">
+                                                        <input name="continuousCurrentCutoffTime" class="config-field" type="number">
+                                                        <div class="ui basic label">
+                                                            Seconds
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="field">
+                                                    <label>
+                                                        Continuous Current Exceeding Warning Time
+                                                        <i class="help circle icon link" data-content="The amount of time that the current is allowed to exceed the maximum continuous current before a warning is displayed.." data-offset="-12"></i>
+                                                    </label>
+                                                    <div class="ui right labeled input">
+                                                        <input name="continuousCurrentCutoffWarning" class="config-field" type="number">
+                                                        <div class="ui basic label">
+                                                            Seconds
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="field">
+                                                    <label>
+                                                        Maximum Charge Current
+                                                        <i class="help circle icon link" data-content="The maximum current that can be delivered into the battery from charging or regeneration before a warning is displayed." data-offset="-12"></i>
+                                                    </label>
+                                                    <div class="ui right labeled input">
+                                                        <input name="maxChargeCurrent" class="config-field" type="number">
+                                                        <div class="ui basic label">
+                                                            A
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 					</div>
                                     </div>
                                 </div>
-                                <div class="ui tab grid" style="margin-top: 0" data-tab="limits">
-                                </div>
+                                <!--<div class="ui tab grid" style="margin-top: 0" data-tab="limits">-->
+                                <!--</div>-->
                                 <div class="ui tab grid" style="margin-top: 0" data-tab="charging">
+                                    <div class="stretched row" style="padding-top: 0">
+                                        <div class="eight wide column">
+                                            <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                                <div class="ui tiny header"><i class="lightning icon"></i>Charge Settings</div>
+                                                <div class="ui form">
+                                                    <div class="field">
+                                                        <label>
+                                                            Charge Voltage
+                                                            <i class="help circle icon link" data-content="The voltage to charge the battery pack to." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="chargeVoltage" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="field">
+                                                        <label>
+                                                            Charge Current
+                                                            <i class="help circle icon link" data-content="The current to charge the battery pack at." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="chargeCurrent" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                A
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="eight wide column">
+                                            <div class="ui green segment" style="margin-top: 0; border-radius: 0; box-shadow: none">
+                                                <div class="ui tiny header"><i class="law icon"></i>Cell Balancing</div>
+                                                <div class="ui form">
+                                                    <div class="field">
+                                                        <label>
+                                                            Balance Start Voltage
+                                                            <i class="help circle icon link" data-content="The cell voltage at which cell balancing will be activated." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="balanceStartVoltage" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="field">
+                                                        <label>
+                                                            Cell Voltage Difference Threshold
+                                                            <i class="help circle icon link" data-content="The threshold for the difference between the voltage of a cell and the lowest cell for which that cell will be discharged." data-offset="-12"></i>
+                                                        </label>
+                                                        <div class="ui right labeled input">
+                                                            <input name="balanceDifferenceThreshold" class="config-field" type="number">
+                                                            <div class="ui basic label">
+                                                                V
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="ui tab grid" style="margin-top: 0" data-tab="balancing">
-                                </div>
+                                <!--<div class="ui tab grid" style="margin-top: 0" data-tab="balancing">-->
+                                <!--</div>-->
                                 <div class="ui tab grid" style="margin-top: 0" data-tab="power">
                                 </div>
                             </div>

@@ -159,7 +159,7 @@ $(function() {
         historyIndex = 0;
         waiting = false;
         $('#status i').removeClass("grey");
-        $('#status i').addClass("blue");
+        $('#status i').addClass("green");
         $('#status .content').html(selectedDeviceName + '<div class="sub header">Status: Idle</div>');
         $('#connect span').text("Disconnect");
     });
@@ -188,41 +188,30 @@ $(function() {
         $("#temperature").html(data);
     });
     socket.on('status_update', function(data) {
-        if (data.command == null)
-            return;
-        if (data.state == 0x01)
+        if (data.fault > 0)
         {
-            if (data.command > 0)
-            {
-                $('#status i').attr("class", "green circle icon");
-                $('#status .content .sub.header').text('Status: Forward');
-            }
-            else if (data.command < 0)
-            {
-                $('#status i').attr("class", "red circle icon");
-                $('#status .content .sub.header').text('Status: Reverse');
-            }
-            else
-            {
-                $('#status i').attr("class", "yellow circle icon");
-                $('#status .content .sub.header').text('Status: Neutral');
-            }
-        }
-        else if (data.fault > 0)
-        {
-            $('#status i').attr("class", "orange circle icon");
+            $('#status i').attr("class", "red circle icon");
             if (data.fault == 1)
                 $('#status .content .sub.header').text('Status: Fault (Undervoltage)');
             else if (data.fault == 2)
                 $('#status .content .sub.header').text('Status: Fault (Overvoltage)');
-            else if (data.fault == 3)
-                $('#status .content .sub.header').text('Status: Fault (Overcurrent)');
             else if (data.fault == 4)
-                $('#status .content .sub.header').text('Status: Fault (Temperature)');
+                $('#status .content .sub.header').text('Status: Fault (Overcurrent)');
+            else if (data.fault == 8)
+                $('#status .content .sub.header').text('Status: Fault (Battery Temperature)');
+            else if (data.fault == 16)
+                $('#status .content .sub.header').text('Status: Fault (Board Temperature)');
+            else if (data.fault == 32)
+                $('#status .content .sub.header').text('Status: Fault (Short)');
+        }
+        else if (data.charging)
+        {
+            $('#status i').attr("class", "orange circle icon");
+            $('#status .content .sub.header').text('Status: Charging');
         }
         else
         {
-            $('#status i').attr("class", "blue circle icon");
+            $('#status i').attr("class", "green circle icon");
             $('#status .content .sub.header').text('Status: Idle');
         }
     });

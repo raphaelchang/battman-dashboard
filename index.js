@@ -78,9 +78,18 @@ io.on('connection', function(socket) {
             var configTable = [
                 ["CANDeviceID", "uint8", 1],
                 ["numCells", "uint8", 1],
+                ["fullCellVoltage", "float", 4],
+                ["emptyCellVoltage", "float", 4],
+                ["packCapacity", "float", 4],
                 ["lowVoltageCutoff", "float", 4],
+                ["lowVoltageWarning", "float", 4],
                 ["highVoltageCutoff", "float", 4],
+                ["highVoltageWarning", "float", 4],
                 ["maxCurrentCutoff", "float", 4],
+                ["maxContinuousCurrent", "float", 4],
+                ["continuousCurrentCutoffTime", "uint8", 1],
+                ["continuousCurrentCutoffWarning", "uint8", 1],
+                ["maxChargeCurrent", "float", 4],
                 ["chargeVoltage", "float", 4],
                 ["chargeCurrent", "float", 4],
                 ["turnOnDelay", "uint16", 2],
@@ -330,7 +339,6 @@ io.on('connection', function(socket) {
                     var offset = new Buffer(4);
                     offset.writeUInt32BE(start);
                     var send = bufferToPacket(Cmd.PACKET_WRITE_NEW_FW, Buffer.concat([offset, firmware.slice(start, end)], end - start + 4), true);
-                    console.log("sending");
                     port.write(send, function(err, bytesWritten) {
                         var complete = false;
                         port.on('data', function(data)
@@ -343,7 +351,6 @@ io.on('connection', function(socket) {
                                             var success = data[1];
                                             if (success == 0)
                                                 return;
-                                            console.log("sent");
                                             complete = true;
                                             socket.emit('fw write', total + end - start);
                                             clearTimeout(timer);
@@ -475,13 +482,15 @@ io.on('connection', function(socket) {
                             var temp = fb.fromInt(values.getInt32(4, false)).toFixed(2);
                             var current = fb.fromInt(values.getInt32(8, false)).toFixed(2);
                             var chargeVoltage = fb.fromInt(values.getInt32(12, false)).toFixed(2);
+                            var faults = values.getUint8(16);
+                            var charging = values.getUint8(17) == 1 ? true : false;
                             //var state = uint8[5];
                             //var fault = uint8[7];
                             data = {current: current, charge_voltage: chargeVoltage};
                             socket.emit('graph', data);
                             socket.emit('voltage', voltage);
                             socket.emit('temperature', temp);
-                            //socket.emit('status_update', {state: state, fault: fault});
+                            socket.emit('status_update', {charging: charging, fault: faults});
                         }
                         else if (data[0] == Cmd.PACKET_GET_CELLS)
                         {
