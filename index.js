@@ -50,8 +50,18 @@ io.on('connection', function(socket) {
         serialport.list(function (err, ports) {
             var port_list = [];
             ports.forEach(function(port) {
-                if (port.manufacturer != "Battman Virtual COM Port")
-                    return;
+                if (process.platform == 'linux')
+                {
+                    if (port.serialNumber.split('_').slice(1, -1).join(' ') != "Battman Virtual COM Port")
+                        return;
+                    port.manufacturer = "Battman Virtual COM Port";
+                    port.serialNumber = port.serialNumber.split('_').slice(-1)[0];
+                }
+                else
+                {
+                    if (port.manufacturer != "Battman Virtual COM Port")
+                        return;
+                }
                 port_list.push(port);
                 console.log(port.comName);
             });
@@ -313,8 +323,18 @@ io.on('connection', function(socket) {
                     serialport.list(function (err, ports) {
                         var port_list = [];
                         ports.forEach(function(port) {
-                            if (port.manufacturer != "Battman Virtual COM Port")
-                                return;
+                            if (process.platform == 'linux')
+                            {
+                                if (port.serialNumber.split('_').slice(1, -1).join(' ') != "Battman Virtual COM Port")
+                                    return;
+                                port.manufacturer = "Battman Virtual COM Port";
+                                port.serialNumber = port.serialNumber.split('_').slice(-1)[0];
+                            }
+                            else
+                            {
+                                if (port.manufacturer != "Battman Virtual COM Port")
+                                    return;
+                            }
                             port_list.push(port);
                         });
                         if (port_list.length > 0)
