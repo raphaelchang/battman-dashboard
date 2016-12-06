@@ -27,44 +27,48 @@ io.on('connection', function(socket) {
     socket.on('list ports', function() {
         serialport.list(function (err, ports) {
             var port_list = [];
-            ports.forEach(function(port) {
+            for (p = 0; p < ports.length; p++) {
+                port = ports[p];
                 if (process.platform == 'linux')
                 {
+                    if (port.serialNumber == undefined)
+                        continue;
                     if (port.serialNumber.split('_').slice(1, -1).join(' ') != "Battman Virtual COM Port")
-                        return;
+                        continue;
                     port.manufacturer = "Battman Virtual COM Port";
                     port.serialNumber = port.serialNumber.split('_').slice(-1)[0];
                 }
                 else
                 {
                     if (port.manufacturer != "Battman Virtual COM Port")
-                        return;
+                        continue;
                 }
                 port_list.push(port);
                 console.log(port.comName);
-            });
+            }
             socket.emit('list ports', {list: port_list});
         });
     });
     usb.on('detach', function(device) {
         serialport.list(function (err, ports) {
             var port_list = [];
-            ports.forEach(function(port) {
+            for (p = 0; p < ports.length; p++) {
+                port = ports[p];
                 if (process.platform == 'linux')
                 {
                     if (port.serialNumber.split('_').slice(1, -1).join(' ') != "Battman Virtual COM Port")
-                        return;
+                        continue;
                     port.manufacturer = "Battman Virtual COM Port";
                     port.serialNumber = port.serialNumber.split('_').slice(-1)[0];
                 }
                 else
                 {
                     if (port.manufacturer != "Battman Virtual COM Port")
-                        return;
+                        continue;
                 }
                 port_list.push(port);
                 console.log(port.comName);
-            });
+            }
             socket.emit('list ports', {list: port_list});
         });
     });
@@ -322,21 +326,22 @@ io.on('connection', function(socket) {
                 var checkForReset = function() {
                     serialport.list(function (err, ports) {
                         var port_list = [];
-                        ports.forEach(function(port) {
+                        for (p = 0; p < ports.length; p++) {
+                            port = ports[p];
                             if (process.platform == 'linux')
                             {
                                 if (port.serialNumber.split('_').slice(1, -1).join(' ') != "Battman Virtual COM Port")
-                                    return;
+                                    continue;
                                 port.manufacturer = "Battman Virtual COM Port";
                                 port.serialNumber = port.serialNumber.split('_').slice(-1)[0];
                             }
                             else
                             {
                                 if (port.manufacturer != "Battman Virtual COM Port")
-                                    return;
+                                    continue;
                             }
                             port_list.push(port);
-                        });
+                        }
                         if (port_list.length > 0)
                         {
                             socket.emit('list ports', {list: port_list});
