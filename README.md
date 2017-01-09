@@ -1,7 +1,9 @@
 # Battman Dashboard
 How to run:  
 1. [Install Node.js](https://nodejs.org/en/download/)  
-2. Make sure you have Python 2.x installed with `python -V`  
-3. `npm install` (follow instructions [here](https://github.com/EmergingTechnologyAdvisors/node-serialport#installation-special-cases) and [here](https://www.npmjs.com/package/usb) first if you have issues with this step)  
-4. `npm start`  
-5. Navigate to [localhost:3000](http://localhost:3000)  
+2. Verify that you have Python 2.x installed with `python -V`  
+3. (Windows users only) Install [Visual C++ Build Tools 2015](http://landinghub.visualstudio.com/visual-cpp-build-tools)  
+4. (Windows users only) `npm config set msvs_version 2015`  
+5. `npm install` (follow instructions [here](https://github.com/EmergingTechnologyAdvisors/node-serialport#installation-special-cases) and [here](https://www.npmjs.com/package/usb) first if you have issues with this step)  
+6. `npm start`  
+7. Navigate to [localhost:3000](http://localhost:3000)  
