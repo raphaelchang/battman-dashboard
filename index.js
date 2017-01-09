@@ -38,6 +38,16 @@ io.on('connection', function(socket) {
                     port.manufacturer = "Battman Virtual COM Port";
                     port.serialNumber = port.serialNumber.split('_').slice(-1)[0];
                 }
+                else if (process.platform == 'win32')
+                {
+                    if (port.pnpId == undefined)
+                        continue;
+                    var split = port.pnpId.split('\\');
+                    if (split[1] != 'VID_0483&PID_5740')
+                        continue;
+                    port.manufacturer = "Battman Virtual COM Port";
+                    port.serialNumber = split[2];
+                }
                 else
                 {
                     if (port.manufacturer != "Battman Virtual COM Port")
@@ -590,18 +600,24 @@ io.on('connection', function(socket) {
             socket.emit('connect port');
             socket.on('disconnect', function()
                     {
-                        port.close(function(err)
-                                {
-                                    connected = false;
-                                });
+                        if (connected)
+                        {
+                            port.close(function(err)
+                                    {
+                                        connected = false;
+                                    });
+                        }
                     });
             socket.on('disconnect port', function()
                     {
-                        port.close(function(err)
-                                {
-                                    connected = false;
-                                    socket.emit('disconnect port');
-                                });
+                        if (connected)
+                        {
+                            port.close(function(err)
+                                    {
+                                        connected = false;
+                                        socket.emit('disconnect port');
+                                    });
+                        }
                     });
         });
     });

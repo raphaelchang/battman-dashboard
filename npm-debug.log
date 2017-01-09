@@ -1,5 +1,5 @@
 0 info it worked if it ends with ok
-1 verbose cli [ '/usr/bin/nodejs', '/usr/bin/npm', 'start' ]
+1 verbose cli [ '/usr/local/bin/node', '/usr/local/bin/npm', 'start' ]
 2 info using npm@3.10.8
 3 info using node@v6.9.1
 4 verbose run-script [ 'prestart', 'start', 'poststart' ]
@@ -7,25 +7,25 @@
 6 silly lifecycle battman-dashboard@1.0.0~prestart: no script for prestart, continuing
 7 info lifecycle battman-dashboard@1.0.0~start: battman-dashboard@1.0.0
 8 verbose lifecycle battman-dashboard@1.0.0~start: unsafe-perm in lifecycle true
-9 verbose lifecycle battman-dashboard@1.0.0~start: PATH: /usr/lib/node_modules/npm/bin/node-gyp-bin:/home/raphael/battman-dashboard/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
-10 verbose lifecycle battman-dashboard@1.0.0~start: CWD: /home/raphael/battman-dashboard
+9 verbose lifecycle battman-dashboard@1.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/Users/raphael/Documents/Projects/battman-dashboard/node_modules/.bin:/Library/Frameworks/Python.framework/Versions/3.5/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/local/CrossPack-AVR/bin:/usr/local/git/bin:/Library/TeX/texbin
+10 verbose lifecycle battman-dashboard@1.0.0~start: CWD: /Users/raphael/Documents/Projects/battman-dashboard
 11 silly lifecycle battman-dashboard@1.0.0~start: Args: [ '-c', 'node index.js' ]
 12 silly lifecycle battman-dashboard@1.0.0~start: Returned: code: 1  signal: null
 13 info lifecycle battman-dashboard@1.0.0~start: Failed to exec start script
 14 verbose stack Error: battman-dashboard@1.0.0 start: `node index.js`
 14 verbose stack Exit status 1
-14 verbose stack     at EventEmitter.<anonymous> (/usr/lib/node_modules/npm/lib/utils/lifecycle.js:255:16)
+14 verbose stack     at EventEmitter.<anonymous> (/usr/local/lib/node_modules/npm/lib/utils/lifecycle.js:255:16)
 14 verbose stack     at emitTwo (events.js:106:13)
 14 verbose stack     at EventEmitter.emit (events.js:191:7)
-14 verbose stack     at ChildProcess.<anonymous> (/usr/lib/node_modules/npm/lib/utils/spawn.js:40:14)
+14 verbose stack     at ChildProcess.<anonymous> (/usr/local/lib/node_modules/npm/lib/utils/spawn.js:40:14)
 14 verbose stack     at emitTwo (events.js:106:13)
 14 verbose stack     at ChildProcess.emit (events.js:191:7)
 14 verbose stack     at maybeClose (internal/child_process.js:877:16)
 14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:226:5)
 15 verbose pkgid battman-dashboard@1.0.0
-16 verbose cwd /home/raphael/battman-dashboard
-17 error Linux 4.4.0-31-generic
-18 error argv "/usr/bin/nodejs" "/usr/bin/npm" "start"
+16 verbose cwd /Users/raphael/Documents/Projects/battman-dashboard
+17 error Darwin 16.1.0
+18 error argv "/usr/local/bin/node" "/usr/local/bin/npm" "start"
 19 error node v6.9.1
 20 error npm  v3.10.8
 21 error code ELIFECYCLE
