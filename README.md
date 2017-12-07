@@ -1,3 +1,5 @@
+<img align="right" height="100" src="https://raphaelchang.com/wp-content/uploads/Battman.png">
+
 # Battman Dashboard
 How to run:  
 1. [Install Node.js](https://nodejs.org/en/download/)  
